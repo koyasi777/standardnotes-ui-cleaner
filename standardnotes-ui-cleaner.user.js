@@ -29,7 +29,9 @@
 // @license      MIT
 // @homepageURL  https://github.com/koyasi777/standardnotes-ui-cleaner
 // @supportURL   https://github.com/koyasi777/standardnotes-ui-cleaner/issues
+// @icon         https://app.standardnotes.com/favicon/favicon-32x32.png
 // ==/UserScript==
+
 
 (function() {
     'use strict';
