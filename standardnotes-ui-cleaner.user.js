@@ -10,7 +10,7 @@
 // @name:de          Standard Notes UI-Reiniger
 // @name:pt-BR       Limpador de UI do Standard Notes
 // @name:ru          Очистка интерфейса Standard Notes
-// @version          1.5.4
+// @version          1.5.5
 // @description      A userscript to hide premium prompts and other clutter from the Standard Notes web UI for free users.
 // @description:ja   Standard NotesのWeb UIから、無料ユーザーには不要なプレミアム案内やボタンを非表示にして、すっきりとした画面に整えます。
 // @description:zh-CN  一个用户脚本，用于隐藏 Standard Notes 网页界面中对免费用户无用的高级功能提示。
@@ -97,20 +97,55 @@
         // --- 4. Hide "Notes" button in the sort/filter popover menu ---
         // This logic is now handled by the more robust logic in section 5.
 
-        // --- 5. In popovers, keep "Global" button and hide other preference targets (like tags) ---
+        // --- 5. In popovers, hide non-Global targets and force "Global" selection ---
         try {
-            const prefHeader = Array.from(document.querySelectorAll('div.my-1.px-3'))
-                .find(div => div.textContent.trim().includes('Preferences for'));
+            // Find the header for the preferences section using a language-agnostic regex.
+            const prefHeader = Array.from(document.querySelectorAll('div.my-1.px-3.text-base.font-semibold'))
+                .find(div => /Preferences for|次の設定対象/.test(div.textContent.trim()));
 
             if (prefHeader) {
                 const buttonContainer = prefHeader.nextElementSibling;
                 if (buttonContainer && buttonContainer.classList.contains('justify-between')) {
-                    buttonContainer.querySelectorAll('button').forEach(button => {
-                        // Hide any button that is not "Global" (e.g., tag buttons, "Reset" button).
-                        if (button.textContent.trim() !== 'Global' && button.style.display !== 'none') {
-                            button.style.display = 'none';
+
+                    let globalButton = null;
+                    let aTagButtonWasSelected = false;
+
+                    const buttons = buttonContainer.querySelectorAll('button');
+
+                    buttons.forEach(button => {
+                        const isTagButton = button.querySelector('svg') !== null;
+                        const isResetButton = button.textContent.trim() === 'Reset';
+                        // Identify the "Global" button using a regex to be language-agnostic.
+                        const isGlobalButton = /Global|グローバル/.test(button.textContent.trim());
+
+                        if (isGlobalButton) {
+                            globalButton = button; // Remember the Global button element.
+                        }
+
+                        // Logic for buttons to be hidden (Tags and Reset).
+                        if (isTagButton || isResetButton) {
+                            // Best Practice: Before hiding, check if this tag button was the selected one.
+                            // The 'bg-info' class is a reliable indicator for the selected state.
+                            if (isTagButton && button.classList.contains('bg-info')) {
+                                aTagButtonWasSelected = true;
+                            }
+                            // Hide the button.
+                            if (button.style.display !== 'none') {
+                                button.style.display = 'none';
+                            }
                         }
                     });
+
+                    // After inspecting all buttons, if a (now hidden) tag button was selected,
+                    // we must programmatically switch the application's state to "Global".
+                    if (globalButton && aTagButtonWasSelected) {
+                        // The most robust way to change app state is to simulate a user click.
+                        // This ensures all of the app's internal event listeners fire correctly.
+                        // We also check that the global button isn't already selected to avoid redundant actions.
+                        if (!globalButton.classList.contains('bg-info')) {
+                            globalButton.click();
+                        }
+                    }
                 }
             }
         } catch (e) {
