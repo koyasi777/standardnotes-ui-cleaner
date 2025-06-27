@@ -10,7 +10,7 @@
 // @name:de          Standard Notes UI-Reiniger
 // @name:pt-BR       Limpador de UI do Standard Notes
 // @name:ru          Очистка интерфейса Standard Notes
-// @version          1.5.3
+// @version          1.5.4
 // @description      A userscript to hide premium prompts and other clutter from the Standard Notes web UI for free users.
 // @description:ja   Standard NotesのWeb UIから、無料ユーザーには不要なプレミアム案内やボタンを非表示にして、すっきりとした画面に整えます。
 // @description:zh-CN  一个用户脚本，用于隐藏 Standard Notes 网页界面中对免费用户无用的高级功能提示。
@@ -162,6 +162,26 @@
             });
         } catch (e) {
             console.error("SN Cleaner: Failed to hide premium theme options.", e);
+        }
+
+        // --- 8. Hide "Change note type" in popover menu (and its container) ---
+        try {
+            // This path data uniquely identifies the "Change note type" icon.
+            const noteTypeIconPath = 'M15.833 4.167v1.666H12.5V4.167h3.333Zm-8.333 0v5H4.167v-5H7.5Zm8.333 6.666v5H12.5v-5h3.333ZM7.5 14.167v1.666H4.167v-1.666H7.5ZM17.5 2.5h-6.667v5H17.5v-5Zm-8.333 0H2.5v8.333h6.667V2.5ZM17.5 9.167h-6.667V17.5H17.5V9.167ZM9.167 12.5H2.5v5h6.667v-5Z';
+
+            // Best Practice: Use the :has() pseudo-class to select the parent section wrapper directly.
+            // This selector finds a 'div' that has the 'my-4' class AND contains the specific SVG icon path.
+            // This is more robust than multi-step traversal (e.g., find icon -> closest parent).
+            // Note: The colon in a class name like 'md:my-2' must be escaped with '\\' in querySelector.
+            const sectionSelector = `.my-4.md\\:my-2:has(svg path[d="${noteTypeIconPath}"])`;
+
+            document.querySelectorAll(sectionSelector).forEach(sectionToHide => {
+                if (sectionToHide.style.display !== 'none') {
+                    sectionToHide.style.display = 'none';
+                }
+            });
+        } catch (e) {
+            console.error("SN Cleaner: Failed to hide 'Change note type' menu section.", e);
         }
     }
 
