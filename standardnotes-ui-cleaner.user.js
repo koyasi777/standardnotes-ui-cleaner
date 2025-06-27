@@ -10,7 +10,7 @@
 // @name:de          Standard Notes UI-Reiniger
 // @name:pt-BR       Limpador de UI do Standard Notes
 // @name:ru          Очистка интерфейса Standard Notes
-// @version          1.5.2
+// @version          1.5.3
 // @description      A userscript to hide premium prompts and other clutter from the Standard Notes web UI for free users.
 // @description:ja   Standard NotesのWeb UIから、無料ユーザーには不要なプレミアム案内やボタンを非表示にして、すっきりとした画面に整えます。
 // @description:zh-CN  一个用户脚本，用于隐藏 Standard Notes 网页界面中对免费用户无用的高级功能提示。
@@ -47,7 +47,7 @@
             const unlockButtons = Array.from(document.querySelectorAll('button'));
             unlockButtons.forEach(button => {
                 if (button.textContent.trim() === 'Unlock features' || button.textContent.trim() === 'Upgrade Features') {
-                     // Hide the parent container, or the button itself if it has no specific parent.
+                    // Hide the parent container, or the button itself if it has no specific parent.
                     const parentToHide = button.closest('.grid.p-4') || button.parentElement;
                     if (parentToHide && parentToHide.style.display !== 'none') {
                         parentToHide.style.display = 'none';
@@ -139,6 +139,30 @@
             console.error("SN Cleaner: Failed to hide 'Create smart view' button.", e);
         }
 
+        // --- 7. Hide premium theme options in popovers ---
+        try {
+            // This path data specifically identifies the star-shaped "premium" icon.
+            // Using this is more robust than relying on class names.
+            const premiumIconPath = 'M8.55 3h2.9l-.573 5.537 4.674-3.248L17 7.711 11.754 10 17 12.289l-1.45 2.422-4.673-3.248.572 5.537H8.551l.572-5.537-4.674 3.248L3 12.289 8.246 10 3 7.711l1.45-2.422 4.673 3.248L8.551 3Z';
+            const premiumIconSelector = `svg path[d="${premiumIconPath}"]`;
+
+            document.querySelectorAll(premiumIconSelector).forEach(iconPath => {
+                // Find the closest parent <li> element to hide the entire menu item.
+                const listItemToHide = iconPath.closest('li');
+                if (listItemToHide && listItemToHide.style.display !== 'none') {
+                    listItemToHide.style.display = 'none';
+                }
+
+                // Also check for the "Dynamic panels" button which uses the same icon
+                const buttonToHide = iconPath.closest('button[role="menuitemcheckbox"]');
+                 if (buttonToHide && buttonToHide.style.display !== 'none') {
+                    // This button is not inside an `li`, so we hide the button itself.
+                    buttonToHide.style.display = 'none';
+                }
+            });
+        } catch (e) {
+            console.error("SN Cleaner: Failed to hide premium theme options.", e);
+        }
     }
 
     // A MutationObserver re-runs the cleanup function whenever the page content changes.
